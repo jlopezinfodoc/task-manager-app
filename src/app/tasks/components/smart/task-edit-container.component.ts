@@ -30,10 +30,18 @@ import { TaskFormComponent } from '../presentational/task-form.component';
 
           <!-- Loading state for initial task fetch -->
           <div *ngIf="loadingTask" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading task...</span>
+            <div class="loading-card">
+              <div class="loading-animation">
+                <div class="spinner-grow text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
+                  <span class="visually-hidden">Loading task...</span>
+                </div>
+                <div class="spinner-grow text-info" role="status" style="width: 2.5rem; height: 2.5rem; animation-delay: 0.2s;">
+                  <span class="visually-hidden">Loading task...</span>
+                </div>
+              </div>
+              <h5 class="mt-3 text-muted">📋 Cargando detalles de la tarea...</h5>
+              <p class="text-muted mb-0">Obteniendo información del servidor</p>
             </div>
-            <p class="mt-2">Loading task details...</p>
           </div>
 
           <!-- Error state for task fetch -->
@@ -57,7 +65,50 @@ import { TaskFormComponent } from '../presentational/task-form.component';
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .loading-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 3rem 2rem;
+      margin: 2rem 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .loading-animation .spinner-grow {
+      animation-duration: 1.5s;
+    }
+
+    .loading-card h5 {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .loading-card p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+      .loading-card {
+        padding: 2rem 1rem;
+        margin: 1rem 0;
+      }
+
+      .loading-animation .spinner-grow {
+        width: 2rem !important;
+        height: 2rem !important;
+      }
+    }
+  `]
 })
 export class TaskEditContainerComponent implements OnInit {
   taskId: number | null = null;

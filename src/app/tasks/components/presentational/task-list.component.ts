@@ -44,12 +44,23 @@ import { TaskCardComponent } from './task-card.component';
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div *ngIf="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+      <!-- Loading State - Elegant Spinner -->
+      <div *ngIf="loading" class="text-center py-5 loading-container">
+        <div class="loading-animation">
+          <div class="spinner-grow text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="spinner-grow text-success" role="status" style="width: 3rem; height: 3rem; animation-delay: 0.15s;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="spinner-grow text-info" role="status" style="width: 3rem; height: 3rem; animation-delay: 0.3s;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
         </div>
-        <p class="mt-2">Loading tasks...</p>
+        <div class="mt-4">
+          <h5 class="text-muted">⏳ Cargando tareas...</h5>
+          <p class="text-muted mb-0">Obteniendo la información más reciente del servidor</p>
+        </div>
       </div>
 
       <!-- Error State -->
@@ -111,9 +122,50 @@ import { TaskCardComponent } from './task-card.component';
       font-weight: bold;
     }
 
+    .loading-container {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 3rem 2rem;
+      margin: 2rem 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .loading-animation .spinner-grow {
+      animation-duration: 1.5s;
+    }
+
+    .loading-container h5 {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .loading-container p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
     @media (max-width: 768px) {
       .task-grid {
         grid-template-columns: 1fr;
+      }
+
+      .loading-container {
+        padding: 2rem 1rem;
+        margin: 1rem 0;
+      }
+
+      .loading-animation .spinner-grow {
+        width: 2rem !important;
+        height: 2rem !important;
       }
     }
   `]

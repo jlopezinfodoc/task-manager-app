@@ -22,20 +22,44 @@ export class TaskBusinessService {
   ) { }
 
   /**
+   * Helper method para agregar delay de 300ms para mejor UX
+   */
+  private async delay(ms: number = 300): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
    * Obtiene todas las tareas y las convierte al modelo de la UI
    */
   async getTasks(filters?: TaskFilterRequestDTO): Promise<Task[]> {
     try {
+      this.notificationService.showLoading('Cargando lista de tareas...');
+
+      // Delay para mejor experiencia de usuario
+      await this.delay();
+
       const response = await firstValueFrom(this.taskHttpService.getTasks(filters));
 
       if (!response.success || !response.data) {
+        this.notificationService.close();
+        this.notificationService.error('Error al cargar tareas', response.message || 'No se pudieron obtener las tareas');
         throw new Error(response.message || 'Failed to load tasks');
       }
 
-      return this.mapTaskResponseArrayToTaskArray(response.data);
+      const tasks = this.mapTaskResponseArrayToTaskArray(response.data);
+
+      this.notificationService.close();
+
+      return tasks;
     } catch (error) {
+      this.notificationService.close();
       console.error('Error getting tasks:', error);
-      throw new Error('Failed to load tasks');
+
+      if (error instanceof Error && !error.message.includes('Failed to load tasks')) {
+        this.notificationService.error('Error inesperado', 'Ocurrió un error al cargar las tareas. Por favor, intenta nuevamente.');
+      }
+
+      throw error;
     }
   }
 
@@ -44,16 +68,33 @@ export class TaskBusinessService {
    */
   async getTask(id: number): Promise<Task> {
     try {
+      this.notificationService.showLoading('Cargando detalles de la tarea...');
+
+      // Delay para mejor experiencia de usuario
+      await this.delay();
+
       const response = await firstValueFrom(this.taskHttpService.getTask(id));
 
       if (!response.success || !response.data) {
+        this.notificationService.close();
+        this.notificationService.error('Error al cargar tarea', response.message || 'No se pudo obtener la tarea solicitada');
         throw new Error(response.message || 'Failed to load task');
       }
 
-      return this.mapTaskResponseToTask(response.data);
+      const task = this.mapTaskResponseToTask(response.data);
+
+      this.notificationService.close();
+
+      return task;
     } catch (error) {
+      this.notificationService.close();
       console.error('Error getting task:', error);
-      throw new Error('Failed to load task');
+
+      if (error instanceof Error && !error.message.includes('Failed to load task')) {
+        this.notificationService.error('Error inesperado', 'Ocurrió un error al cargar la tarea. Por favor, intenta nuevamente.');
+      }
+
+      throw error;
     }
   }
 
@@ -62,12 +103,15 @@ export class TaskBusinessService {
    */
   async createTask(taskForm: TaskForm): Promise<Task> {
     try {
-      this.notificationService.showLoading('Creando tarea...');
+      this.notificationService.showLoading('Creando nueva tarea...');
 
       const createRequest: CreateTaskRequestDTO = {
         title: taskForm.title,
         description: taskForm.description
       };
+
+      // Delay para mejor experiencia de usuario
+      await this.delay();
 
       const response = await firstValueFrom(this.taskHttpService.createTask(createRequest));
 
@@ -117,6 +161,9 @@ export class TaskBusinessService {
         isCompleted: currentTask?.completed ?? false // Mantener estado actual o false por defecto
       };
 
+      // Delay para mejor experiencia de usuario
+      await this.delay();
+
       const response = await firstValueFrom(this.taskHttpService.updateTask(id, updateRequest));
 
       if (!response.success || !response.data) {
@@ -148,9 +195,15 @@ export class TaskBusinessService {
    */
   async completeTask(id: number): Promise<Task> {
     try {
+      this.notificationService.showLoading('Completando tarea...');
+
+      // Delay para mejor experiencia de usuario
+      await this.delay();
+
       const response = await firstValueFrom(this.taskHttpService.completeTask(id));
 
       if (!response.success || !response.data) {
+        this.notificationService.close();
         if (response.statusCode === 409) {
           this.notificationService.warning('Tarea ya completada', 'Esta tarea ya se encuentra marcada como completada.');
         } else {
@@ -160,10 +213,12 @@ export class TaskBusinessService {
       }
 
       const completedTask = this.mapTaskResponseToTask(response.data);
+      this.notificationService.close();
       this.notificationService.toastSuccess('¡Tarea completada!');
 
       return completedTask;
     } catch (error) {
+      this.notificationService.close();
       console.error('Error completing task:', error);
 
       if (error instanceof Error && !error.message.includes('Failed to complete task') && !error.message.includes('already completed')) {
