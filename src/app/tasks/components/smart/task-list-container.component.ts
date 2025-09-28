@@ -117,24 +117,25 @@ export class TaskListContainerComponent implements OnInit {
         this.applyFilters();
       }
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Failed to update task';
+      // Los errores ya se manejan en el business service con SweetAlert2
       console.error('Error toggling task completion:', error);
     }
   }
 
   async onDeleteTask(taskId: number): Promise<void> {
-    if (!confirm('Are you sure you want to delete this task?')) {
-      return;
-    }
-
     try {
-      await this.taskBusinessService.deleteTask(taskId);
+      const task = this.tasks.find(t => t.id === taskId);
+      if (!task) return;
 
-      // Remove the task from the local array
-      this.tasks = this.tasks.filter(t => t.id !== taskId);
-      this.applyFilters();
+      const wasDeleted = await this.taskBusinessService.deleteTaskWithConfirmation(taskId, task.title);
+
+      if (wasDeleted) {
+        // Remove the task from the local array
+        this.tasks = this.tasks.filter(t => t.id !== taskId);
+        this.applyFilters();
+      }
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Failed to delete task';
+      // Los errores ya se manejan en el business service con SweetAlert2
       console.error('Error deleting task:', error);
     }
   }

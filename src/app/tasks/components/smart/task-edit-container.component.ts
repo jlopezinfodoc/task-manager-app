@@ -111,7 +111,7 @@ export class TaskEditContainerComponent implements OnInit {
       await this.taskBusinessService.updateTask(this.taskId, taskForm);
       this.navigateToList();
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Failed to update task';
+      // Los errores ya se manejan en el business service con SweetAlert2
       console.error('Error updating task:', error);
     } finally {
       this.loading = false;

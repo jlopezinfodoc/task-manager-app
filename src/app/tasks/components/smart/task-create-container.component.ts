@@ -54,7 +54,7 @@ export class TaskCreateContainerComponent {
       await this.taskBusinessService.createTask(taskForm);
       this.navigateToList();
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Failed to create task';
+      // Los errores ya se manejan en el business service con SweetAlert2
       console.error('Error creating task:', error);
     } finally {
       this.loading = false;
