@@ -8,14 +8,21 @@ import {
   UpdateTaskRequestDTO,
   CompleteTaskRequestDTO
 } from '../dtos';
+import { EnvironmentService } from '../../core/services/environment.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskHttpService {
-  private readonly baseUrl = 'https://jsonplaceholder.typicode.com/todos'; // Simulamos una API
+  private readonly baseUrl: string;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private environmentService: EnvironmentService
+  ) {
+    this.baseUrl = this.environmentService.buildApiUrl('todos');
+    this.environmentService.log('debug', 'TaskHttpService initialized with baseUrl:', this.baseUrl);
+  }
 
   getTasks(): Observable<TaskResponseDTO[]> {
     return this.http.get<TaskResponseDTO[]>(this.baseUrl);

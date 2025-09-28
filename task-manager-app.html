@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Tareas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        /* Vista Lista de Tareas */
+        .task-list-view {
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+        }
+
+        .filter-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 6px;
+            gap: 6px;
+        }
+
+        .filter-option {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-option.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: #4f46e5;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 300px;
+            padding: 12px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .task-meta {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit:hover {
+            background: #f3f4f6;
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .btn-delete:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        /* Vista Formulario */
+        .form-view {
+            display: none;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb {
+            margin-bottom: 30px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 35px;
+        }
+
+        .btn-cancel {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-bar {
+                max-width: none;
+            }
+
+            .filter-group {
+                justify-content: center;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: 30px 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Estados de las tareas */
+        .task-pending::before {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .task-completed::before {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .task-completed .task-title {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Task Manager</h1>
+            <p>Organiza y administra tus tareas de manera eficiente</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Vista Lista de Tareas -->
+            <div class="task-list-view" id="listView">
+                <div class="controls">
+                    <button class="btn-primary" onclick="showCreateForm()">
+                        ✨ Nueva Tarea
+                    </button>
+                    
+                    <div class="filter-group">
+                        <button class="filter-option active" onclick="filterTasks('all')">Todas (200)</button>
+                        <button class="filter-option" onclick="filterTasks('pending')">Pendientes (110)</button>
+                        <button class="filter-option" onclick="filterTasks('completed')">Completadas (90)</button>
+                    </div>
+                    
+                    <input type="text" class="search-bar" placeholder="Buscar tareas..." onkeyup="searchTasks(this.value)">
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">200</div>
+                        <div class="stat-label">Total de Tareas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">110</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">90</div>
+                        <div class="stat-label">Completadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">45%</div>
+                        <div class="stat-label">Progreso</div>
+                    </div>
+                </div>
+
+                <div class="tasks-grid" id="tasksGrid">
+                    <div class="task-card task-pending">
+                        <div class="task-title">Delectus aut autem</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(1)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(1)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card task-pending">
+                        <div class="task-title">Quis ut nam facilis et officia qui</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(2)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(2)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card task-completed">
+                        <div class="task-title">Fugiat veniam minus</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(3)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(3)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card task-pending">
+                        <div class="task-title">Et porro tempora</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(4)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(4)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card task-pending">
+                        <div class="task-title">Laboriosam mollitia et enim quasi adipisci quia provident illum</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(5)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(5)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card task-completed">
+                        <div class="task-title">Qui ullam ratione quibusdam voluptatem quia omnis</div>
+                        <div class="task-meta">Creado: 28/09/25, 1:21 PM</div>
+                        <div class="task-actions">
+                            <button class="btn-secondary btn-edit" onclick="showEditForm(6)">✏️ Editar</button>
+                            <button class="btn-secondary btn-delete" onclick="deleteTask(6)">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Crear Tarea -->
+            <div class="form-view" id="createView">
+                <div class="form-container">
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showListView()">📋 Tareas</a> > Crear Nueva Tarea
+                    </div>
+                    
+                    <div class="form-card">
+                        <h2 class="form-title">✨ Crear Nueva Tarea</h2>
+                        
+                        <form id="createForm">
+                            <div class="form-group">
+                                <label class="form-label" for="createTitle">Título *</label>
+                                <input type="text" id="createTitle" class="form-input" placeholder="Ingresa el título de la tarea" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="createDescription">Descripción</label>
+                                <textarea id="createDescription" class="form-input form-textarea" placeholder="Ingresa la descripción de la tarea (optional)"></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel" onclick="showListView()">Cancelar</button>
+                                <button type="submit" class="btn-primary">🚀 Crear Tarea</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Editar Tarea -->
+            <div class="form-view" id="editView">
+                <div class="form-container">
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showListView()">📋 Tareas</a> > Editar Tarea #1
+                    </div>
+                    
+                    <div class="form-card">
+                        <h2 class="form-title">✏️ Editar Tarea</h2>
+                        
+                        <form id="editForm">
+                            <div class="form-group">
+                                <label class="form-label" for="editTitle">Título *</label>
+                                <input type="text" id="editTitle" class="form-input" value="delectus aut autem" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="editDescription">Descripción</label>
+                                <textarea id="editDescription" class="form-input form-textarea" placeholder="Ingresa la descripción de la tarea (optional)"></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel" onclick="showListView()">Cancelar</button>
+                                <button type="submit" class="btn-primary">💾 Actualizar Tarea</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones de navegación
+        function showListView() {
+            document.getElementById('listView').style.display = 'block';
+            document.getElementById('createView').style.display = 'none';
+            document.getElementById('editView').style.display = 'none';
+        }
+
+        function showCreateForm() {
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('createView').style.display = 'block';
+            document.getElementById('editView').style.display = 'none';
+            document.getElementById('createTitle').focus();
+        }
+
+        function showEditForm(id) {
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('createView').style.display = 'none';
+            document.getElementById('editView').style.display = 'block';
+            document.getElementById('editTitle').focus();
+        }
+
+        // Funciones de filtrado
+        function filterTasks(filter) {
+            const buttons = document.querySelectorAll('.filter-option');
+            const cards = document.querySelectorAll('.task-card');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            cards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else if (filter === 'pending' && card.classList.contains('task-pending')) {
+                    card.style.display = 'block';
+                } else if (filter === 'completed' && card.classList.contains('task-completed')) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function searchTasks(query) {
+            const cards = document.querySelectorAll('.task-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.task-title').textContent.toLowerCase();
+                if (title.includes(query.toLowerCase())) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function deleteTask(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                // Aquí iría la lógica de eliminación
+                alert('Tarea eliminada correctamente');
+            }
+        }
+
+        // Manejadores de formularios
+        document.getElementById('createForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('createTitle').value;
+            const description = document.getElementById('createDescription').value;
+            
+            if (title.trim()) {
+                alert('Tarea creada: ' + title);
+                this.reset();
+                showListView();
+            }
+        });
+
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('editTitle').value;
+            const description = document.getElementById('editDescription').value;
+            
+            if (title.trim()) {
+                alert('Tarea actualizada: ' + title);
+                showListView();
+            }
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            showListView();
+        });
+    </script>
+</body>
+</html>
