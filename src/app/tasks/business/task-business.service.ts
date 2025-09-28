@@ -6,7 +6,8 @@ import {
   TaskResponseDTO,
   CreateTaskRequestDTO,
   UpdateTaskRequestDTO,
-  CompleteTaskRequestDTO
+  TaskFilterRequestDTO,
+  ApiResponse
 } from '../dtos';
 
 @Injectable({
@@ -19,10 +20,15 @@ export class TaskBusinessService {
   /**
    * Obtiene todas las tareas y las convierte al modelo de la UI
    */
-  async getTasks(): Promise<Task[]> {
+  async getTasks(filters?: TaskFilterRequestDTO): Promise<Task[]> {
     try {
-      const tasksDTO = await firstValueFrom(this.taskHttpService.getTasks());
-      return this.mapTaskResponseArrayToTaskArray(tasksDTO);
+      const response = await firstValueFrom(this.taskHttpService.getTasks(filters));
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to load tasks');
+      }
+
+      return this.mapTaskResponseArrayToTaskArray(response.data);
     } catch (error) {
       console.error('Error getting tasks:', error);
       throw new Error('Failed to load tasks');
@@ -34,8 +40,13 @@ export class TaskBusinessService {
    */
   async getTask(id: number): Promise<Task> {
     try {
-      const taskDTO = await firstValueFrom(this.taskHttpService.getTask(id));
-      return this.mapTaskResponseToTask(taskDTO);
+      const response = await firstValueFrom(this.taskHttpService.getTask(id));
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to load task');
+      }
+
+      return this.mapTaskResponseToTask(response.data);
     } catch (error) {
       console.error('Error getting task:', error);
       throw new Error('Failed to load task');
@@ -52,8 +63,14 @@ export class TaskBusinessService {
         description: taskForm.description
       };
 
-      const taskDTO = await firstValueFrom(this.taskHttpService.createTask(createRequest));
-      return this.mapTaskResponseToTask(taskDTO);
+      const response = await firstValueFrom(this.taskHttpService.createTask(createRequest));
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to create task');
+      }
+
+      // Después de crear, obtenemos la tarea completa
+      return await this.getTask(response.data.id);
     } catch (error) {
       console.error('Error creating task:', error);
       throw new Error('Failed to create task');
@@ -66,13 +83,18 @@ export class TaskBusinessService {
   async updateTask(id: number, taskForm: TaskForm): Promise<Task> {
     try {
       const updateRequest: UpdateTaskRequestDTO = {
-        id,
         title: taskForm.title,
-        description: taskForm.description
+        description: taskForm.description,
+        isCompleted: false // Valor por defecto, se puede ajustar
       };
 
-      const taskDTO = await firstValueFrom(this.taskHttpService.updateTask(updateRequest));
-      return this.mapTaskResponseToTask(taskDTO);
+      const response = await firstValueFrom(this.taskHttpService.updateTask(id, updateRequest));
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to update task');
+      }
+
+      return this.mapTaskResponseToTask(response.data);
     } catch (error) {
       console.error('Error updating task:', error);
       throw new Error('Failed to update task');
@@ -80,20 +102,20 @@ export class TaskBusinessService {
   }
 
   /**
-   * Marca una tarea como completada o no completada
+   * Marca una tarea como completada
    */
-  async toggleTaskCompletion(id: number, completed: boolean): Promise<Task> {
+  async completeTask(id: number): Promise<Task> {
     try {
-      const completeRequest: CompleteTaskRequestDTO = {
-        id,
-        completed
-      };
+      const response = await firstValueFrom(this.taskHttpService.completeTask(id));
 
-      const taskDTO = await firstValueFrom(this.taskHttpService.completeTask(completeRequest));
-      return this.mapTaskResponseToTask(taskDTO);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to complete task');
+      }
+
+      return this.mapTaskResponseToTask(response.data);
     } catch (error) {
-      console.error('Error toggling task completion:', error);
-      throw new Error('Failed to update task status');
+      console.error('Error completing task:', error);
+      throw new Error('Failed to complete task');
     }
   }
 
@@ -102,7 +124,11 @@ export class TaskBusinessService {
    */
   async deleteTask(id: number): Promise<void> {
     try {
-      await firstValueFrom(this.taskHttpService.deleteTask(id));
+      const response = await firstValueFrom(this.taskHttpService.deleteTask(id));
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete task');
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       throw new Error('Failed to delete task');
@@ -139,10 +165,10 @@ export class TaskBusinessService {
     return {
       id: dto.id,
       title: dto.title,
-      description: (dto as any).body || dto.description || '', // JSONPlaceholder usa 'body'
-      completed: dto.completed,
-      createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
-      updatedAt: dto.updatedAt ? new Date(dto.updatedAt) : new Date()
+      description: dto.description || '',
+      completed: dto.isCompleted,
+      createdAt: dto.createdDate ? new Date(dto.createdDate) : new Date(),
+      updatedAt: dto.completedDate ? new Date(dto.completedDate) : new Date()
     };
   }
 

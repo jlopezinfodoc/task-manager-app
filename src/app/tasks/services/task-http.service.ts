@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
-  TaskResponseDTO,
-  TaskListResponseDTO,
+  TaskApiResponse,
+  TaskListApiResponse,
+  CreateTaskApiResponse,
+  DeleteTaskApiResponse,
   CreateTaskRequestDTO,
   UpdateTaskRequestDTO,
-  CompleteTaskRequestDTO
+  CompleteTaskRequestDTO,
+  TaskFilterRequestDTO
 } from '../dtos';
 import { EnvironmentService } from '../../core/services/environment.service';
 
@@ -20,47 +23,81 @@ export class TaskHttpService {
     private http: HttpClient,
     private environmentService: EnvironmentService
   ) {
-    this.baseUrl = this.environmentService.buildApiUrl('todos');
+    this.baseUrl = this.environmentService.buildApiUrl('api/tasks');
     this.environmentService.log('debug', 'TaskHttpService initialized with baseUrl:', this.baseUrl);
   }
 
-  getTasks(): Observable<TaskResponseDTO[]> {
-    return this.http.get<TaskResponseDTO[]>(this.baseUrl);
+  /**
+   * GET /api/tasks - Obtener todas las tareas con filtros opcionales
+   */
+    getTasks(filters?: TaskFilterRequestDTO): Observable<TaskListApiResponse> {
+    let params = new HttpParams();
+
+    if (filters) {
+      if (filters.isCompleted !== undefined) {
+        params = params.set('isCompleted', filters.isCompleted.toString());
+      }
+      if (filters.title) {
+        params = params.set('title', filters.title);
+      }
+      if (filters.createdFrom) {
+        params = params.set('createdFrom', filters.createdFrom);
+      }
+      if (filters.createdTo) {
+        params = params.set('createdTo', filters.createdTo);
+      }
+      if (filters.pageNumber) {
+        params = params.set('pageNumber', filters.pageNumber.toString());
+      }
+      if (filters.pageSize) {
+        params = params.set('pageSize', filters.pageSize.toString());
+      }
+    }
+
+    return this.http.get<TaskListApiResponse>(this.baseUrl, { params });
   }
 
-  getTask(id: number): Observable<TaskResponseDTO> {
-    return this.http.get<TaskResponseDTO>(`${this.baseUrl}/${id}`);
+  /**
+   * GET /api/tasks/{id} - Obtener tarea por ID
+   */
+  getTask(id: number): Observable<TaskApiResponse> {
+    return this.http.get<TaskApiResponse>(`${this.baseUrl}/${id}`);
   }
 
-  createTask(task: CreateTaskRequestDTO): Observable<TaskResponseDTO> {
+  /**
+   * POST /api/tasks - Crear nueva tarea
+   */
+  createTask(task: CreateTaskRequestDTO): Observable<CreateTaskApiResponse> {
     const payload = {
       title: task.title,
-      body: task.description,
-      userId: 1,
-      completed: false
+      description: task.description || ''
     };
-    return this.http.post<TaskResponseDTO>(this.baseUrl, payload);
+    return this.http.post<CreateTaskApiResponse>(this.baseUrl, payload);
   }
 
-  updateTask(task: UpdateTaskRequestDTO): Observable<TaskResponseDTO> {
+  /**
+   * PUT /api/tasks/{id} - Actualizar tarea completa
+   */
+  updateTask(id: number, task: UpdateTaskRequestDTO): Observable<TaskApiResponse> {
     const payload = {
-      id: task.id,
       title: task.title,
-      body: task.description,
-      userId: 1,
-      completed: false
+      description: task.description || '',
+      isCompleted: task.isCompleted
     };
-    return this.http.put<TaskResponseDTO>(`${this.baseUrl}/${task.id}`, payload);
+    return this.http.put<TaskApiResponse>(`${this.baseUrl}/${id}`, payload);
   }
 
-  completeTask(request: CompleteTaskRequestDTO): Observable<TaskResponseDTO> {
-    const payload = {
-      completed: request.completed
-    };
-    return this.http.patch<TaskResponseDTO>(`${this.baseUrl}/${request.id}`, payload);
+  /**
+   * PATCH /api/tasks/{id}/complete - Marcar tarea como completada
+   */
+  completeTask(id: number): Observable<TaskApiResponse> {
+    return this.http.patch<TaskApiResponse>(`${this.baseUrl}/${id}/complete`, {});
   }
 
-  deleteTask(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  /**
+   * DELETE /api/tasks/{id} - Eliminar tarea
+   */
+  deleteTask(id: number): Observable<DeleteTaskApiResponse> {
+    return this.http.delete<DeleteTaskApiResponse>(`${this.baseUrl}/${id}`);
   }
 }

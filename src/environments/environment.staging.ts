@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://dev-api.taskmanager.com',
+  apiUrl: 'https://localhost:7001',
   appName: 'Task Manager - Staging',
   version: '1.0.0-staging',
-  logLevel: 'info' as const
+  logLevel: 'warn' as const
 };

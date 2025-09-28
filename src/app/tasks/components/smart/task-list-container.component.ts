@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Task, TaskFilter } from '../../models';
 import { TaskBusinessService } from '../../business';
-import { TaskListComponent } from '../presentational/task-list.component';
+import { TaskListComponent, TaskFilterComponent } from '../presentational';
+import { TaskFilterRequestDTO } from '../../dtos';
 
 @Component({
   selector: 'app-task-list-container',
   standalone: true,
-  imports: [CommonModule, TaskListComponent],
+  imports: [CommonModule, TaskListComponent, TaskFilterComponent],
   template: `
     <div class="container-fluid py-4">
       <div class="row">
@@ -24,6 +25,11 @@ import { TaskListComponent } from '../presentational/task-list.component';
             </button>
           </div>
 
+          <!-- Filtros -->
+          <app-task-filter
+            (filtersChanged)="onFiltersChanged($event)">
+          </app-task-filter>
+
           <app-task-list
             [tasks]="filteredTasks"
             [loading]="loading"
@@ -34,7 +40,7 @@ import { TaskListComponent } from '../presentational/task-list.component';
             (edit)="navigateToEdit($event)"
             (delete)="onDeleteTask($event)"
             (createNew)="navigateToCreate()"
-            (retry)="loadTasks()">
+            (retry)="loadTasks(currentApiFilters)">
           </app-task-list>
         </div>
       </div>
@@ -52,6 +58,7 @@ export class TaskListContainerComponent implements OnInit {
   loading = false;
   error: string | null = null;
   filter: TaskFilter = {};
+  currentApiFilters: TaskFilterRequestDTO = {};
 
   constructor(
     private taskBusinessService: TaskBusinessService,
@@ -62,12 +69,12 @@ export class TaskListContainerComponent implements OnInit {
     this.loadTasks();
   }
 
-  async loadTasks(): Promise<void> {
+  async loadTasks(apiFilters?: TaskFilterRequestDTO): Promise<void> {
     this.loading = true;
     this.error = null;
 
     try {
-      this.tasks = await this.taskBusinessService.getTasks();
+      this.tasks = await this.taskBusinessService.getTasks(apiFilters);
       this.applyFilters();
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -75,6 +82,14 @@ export class TaskListContainerComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  /**
+   * Maneja cambios en los filtros de la API
+   */
+  onFiltersChanged(apiFilters: TaskFilterRequestDTO): void {
+    this.currentApiFilters = apiFilters;
+    this.loadTasks(apiFilters);
   }
 
   onFilterChange(newFilter: TaskFilter): void {
@@ -87,10 +102,13 @@ export class TaskListContainerComponent implements OnInit {
       const task = this.tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      const updatedTask = await this.taskBusinessService.toggleTaskCompletion(
-        taskId,
-        !task.completed
-      );
+      // Solo se puede completar una tarea, no se puede "descompletar" según la API
+      if (task.completed) {
+        console.warn('Task is already completed and cannot be uncompleted');
+        return;
+      }
+
+      const updatedTask = await this.taskBusinessService.completeTask(taskId);
 
       // Update the task in the local array
       const index = this.tasks.findIndex(t => t.id === taskId);
