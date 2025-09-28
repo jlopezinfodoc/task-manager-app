@@ -47,6 +47,11 @@ export class TaskCreateContainerComponent {
   ) {}
 
   async onCreateTask(taskForm: TaskForm): Promise<void> {
+    // Prevenir doble submit
+    if (this.loading) {
+      return;
+    }
+
     this.loading = true;
     this.error = null;
 

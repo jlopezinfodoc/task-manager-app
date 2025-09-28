@@ -104,12 +104,21 @@ export class TaskEditContainerComponent implements OnInit {
   async onUpdateTask(taskForm: TaskForm): Promise<void> {
     if (!this.taskId) return;
 
+    // Prevenir doble submit
+    if (this.loading) {
+      return;
+    }
+
     this.loading = true;
     this.error = null;
 
     try {
-      await this.taskBusinessService.updateTask(this.taskId, taskForm);
-      this.navigateToList();
+      await this.taskBusinessService.updateTask(this.taskId, taskForm, this.task || undefined);
+
+      // Solo navegar si no hubo errores
+      if (!this.error) {
+        this.navigateToList();
+      }
     } catch (error) {
       // Los errores ya se manejan en el business service con SweetAlert2
       console.error('Error updating task:', error);

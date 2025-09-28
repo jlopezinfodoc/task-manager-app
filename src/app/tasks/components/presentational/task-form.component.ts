@@ -154,6 +154,11 @@ export class TaskFormComponent implements OnInit, OnChanges {
   }
 
   onSubmit(): void {
+    // Prevenir doble submit si ya está en proceso de carga
+    if (this.loading) {
+      return;
+    }
+
     if (this.taskForm.valid) {
       const formValue = this.taskForm.value;
       const taskForm: TaskForm = {

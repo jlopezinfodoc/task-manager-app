@@ -77,11 +77,19 @@ export class TaskBusinessService {
         throw new Error(response.message || 'Failed to create task');
       }
 
-      // Después de crear, obtenemos la tarea completa
-      const newTask = await this.getTask(response.data.id);
-
       this.notificationService.close();
       this.notificationService.toastSuccess('¡Tarea creada exitosamente!');
+
+      // Crear un objeto Task mock con los datos que tenemos
+      // En lugar de hacer un GET adicional que puede fallar
+      const newTask: Task = {
+        id: response.data.id,
+        title: taskForm.title,
+        description: taskForm.description || '',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
       return newTask;
     } catch (error) {
@@ -99,14 +107,14 @@ export class TaskBusinessService {
   /**
    * Actualiza una tarea existente
    */
-  async updateTask(id: number, taskForm: TaskForm): Promise<Task> {
+  async updateTask(id: number, taskForm: TaskForm, currentTask?: Task): Promise<Task> {
     try {
       this.notificationService.showLoading('Actualizando tarea...');
 
       const updateRequest: UpdateTaskRequestDTO = {
         title: taskForm.title,
         description: taskForm.description,
-        isCompleted: false // Valor por defecto, se puede ajustar
+        isCompleted: currentTask?.completed ?? false // Mantener estado actual o false por defecto
       };
 
       const response = await firstValueFrom(this.taskHttpService.updateTask(id, updateRequest));
