@@ -21,21 +21,25 @@ import { EnvironmentService } from '../services/environment.service';
     .environment-info {
       position: fixed;
       top: 10px;
-      right: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1050;
       font-size: 0.8rem;
+      text-align: center;
     }
 
     .badge {
       display: block;
       margin-bottom: 5px;
+      white-space: nowrap;
     }
 
     @media (max-width: 768px) {
       .environment-info {
         position: relative;
         top: auto;
-        right: auto;
+        left: auto;
+        transform: none;
         margin-bottom: 1rem;
       }
     }
